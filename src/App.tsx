@@ -139,7 +139,7 @@ const decodeSafeTransaction = async (decoded: Result): Promise<DecodedValue> => 
       params: [
         { label: "To", value: decoded[0] },
         { label: "Value", value: decoded[1] },
-        { label: "Data", value: decoded[2], decoded: await decodeData(decoded[2]) }
+        { label: "Data", value: decoded[2], decoded: await decodeData(decoded[2]) },
         { label: "Operation", value: decoded[3] },
         { label: "SafeTxGas", value: decoded[4] },
         { label: "BaseGas", value: decoded[5] },
