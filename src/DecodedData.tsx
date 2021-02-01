@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { TextField } from '@material-ui/core';
 import MuiAccordion from '@material-ui/core/Accordion';
 import MuiAccordionSummary from '@material-ui/core/AccordionSummary';
 import MuiAccordionDetails from '@material-ui/core/AccordionDetails';
@@ -21,7 +20,6 @@ const Accordion = withStyles({
             display: 'none',
         },
     },
-    expanded: {},
 })(MuiAccordion);
 
 const AccordionSummary = withStyles({
@@ -34,8 +32,6 @@ const AccordionSummary = withStyles({
             minHeight: 56,
         },
     },
-    content: {},
-    expanded: {},
 })(MuiAccordionSummary);
 
 const AccordionDetails = withStyles((theme) => ({
@@ -52,12 +48,6 @@ const useStyles = makeStyles((theme) => ({
     selectEmpty: {
         marginTop: theme.spacing(2),
     },
-    content: {
-        padding: "4px"
-    },
-    input: {
-        width: "100%"
-    },
     values: {
         padding: "4px 16px 4px 16px",
         display: "block",
@@ -70,11 +60,9 @@ interface Props {
 }
 
 export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }> = ({ param, hideValue }) => {
-    console.log({ param })
     const classes = useStyles()
     const [decodedData, setDecodedData] = useState(param.decoded)
     const [selectedSignature, setSelectedSignature] = useState(param.signatures && param.signatures[0])
-    console.log({ selectedSignature, decodedData })
     const loadDecodedData = useCallback(async (selectedSignature: string) => {
         try {
             setDecodedData(await decodeData(selectedSignature, param.value))
@@ -90,7 +78,6 @@ export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }
     }, [setSelectedSignature, loadDecodedData])
     useEffect(() => {
         // Intial load
-        console.log({ decodedData, selectedSignature })
         if (decodedData || !selectedSignature) return
         loadDecodedData(selectedSignature)
     }, [decodedData, selectedSignature, loadDecodedData])

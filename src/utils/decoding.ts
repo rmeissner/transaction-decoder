@@ -29,7 +29,6 @@ export const loadSignatures = async (data: string): Promise<string[] | undefined
 }
 
 export const decodeData = async (functionSignature: string, data: string): Promise<Decoded | undefined> => {
-    console.log({ functionSignature, data })
     const functionFragment = FunctionFragment.fromString(functionSignature)
     const decoded = defaultInterface.decodeFunctionData(functionFragment, data)
     const params = await processDecoded(functionFragment, decoded)
