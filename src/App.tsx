@@ -24,6 +24,10 @@ function App() {
   const [dataInfo, setDataInfo] = useState<DecodedValue | undefined>(undefined)
   const loadDataInfo = useCallback(async (data: string) => {
     setTxData(data)
+    if (data.length < 10) {
+      setDataInfo(undefined)
+      return
+    }
     try {
       const signatures = await loadSignatures(data)
       setDataInfo({

@@ -61,8 +61,8 @@ interface Props {
 
 export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }> = ({ param, hideValue }) => {
     const classes = useStyles()
-    const [decodedData, setDecodedData] = useState(param.decoded)
-    const [selectedSignature, setSelectedSignature] = useState(param.signatures && param.signatures[0])
+    const [decodedData, setDecodedData] = useState<Decoded | undefined>(undefined)
+    const [selectedSignature, setSelectedSignature] = useState<string | undefined>(undefined)
     const loadDecodedData = useCallback(async (selectedSignature: string) => {
         try {
             setDecodedData(await decodeData(selectedSignature, param.value))
@@ -78,9 +78,11 @@ export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }
     }, [setSelectedSignature, loadDecodedData])
     useEffect(() => {
         // Intial load
-        if (decodedData || !selectedSignature) return
-        loadDecodedData(selectedSignature)
-    }, [decodedData, selectedSignature, loadDecodedData])
+        const selectedSignature = param.signatures && param.signatures[0]
+        setSelectedSignature(selectedSignature)
+        setDecodedData(param.decoded)
+        if (!param.decoded && selectedSignature) loadDecodedData(selectedSignature)
+    }, [param, setSelectedSignature, loadDecodedData])
     return (<>
         {param.label !== undefined && (
             <b>{param.label}</b>
