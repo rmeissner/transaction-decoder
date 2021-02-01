@@ -90,8 +90,12 @@ const decodeData = async (data: string): Promise<Decoded | undefined> => {
 }
 
 const processDecoded = async (functionFragment: FunctionFragment, decoded: Result): Promise<DecodedValue[]> => {
-  if (Interface.getSighash(functionFragment).toLocaleLowerCase() === "0x8d80ff0a" && decoded.length == 1) {
-    return [await decodeMultisend(decoded[0])]
+  const sigHash = Interface.getSighash(functionFragment).toLocaleLowerCase()
+  if (sigHash === "0x8d80ff0a" && decoded.length == 1) {
+    try { return [await decodeMultisend(decoded[0])] } catch (e) { console.error(e) }
+  }
+  if (sigHash === "0x6a761202" && decoded.length == 10) {
+    try { return [await decodeSafeTransaction(decoded)] } catch (e) { console.error(e) }
   }
   return decoded.map((param) => { return { value: param } })
 }
@@ -123,6 +127,27 @@ const decodeMultisend = async (multisendData: string): Promise<DecodedValue> => 
     decoded: {
       label: "Multisend transactions",
       params
+    }
+  }
+}
+
+const decodeSafeTransaction = async (decoded: Result): Promise<DecodedValue> => {
+  return {
+    value: undefined,
+    decoded: {
+      label: "Safe transaction",
+      params: [
+        { label: "To", value: decoded[0] },
+        { label: "Value", value: decoded[1] },
+        { label: "Data", value: decoded[2], decoded: await decodeData(decoded[2]) }
+        { label: "Operation", value: decoded[3] },
+        { label: "SafeTxGas", value: decoded[4] },
+        { label: "BaseGas", value: decoded[5] },
+        { label: "GasPrice", value: decoded[6] },
+        { label: "GasToken", value: decoded[7] },
+        { label: "RefundReceiver", value: decoded[8] },
+        { label: "Signatures", value: decoded[9] },
+      ]
     }
   }
 }
