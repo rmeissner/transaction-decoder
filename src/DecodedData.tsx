@@ -62,7 +62,7 @@ interface Props {
 export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }> = ({ param, hideValue }) => {
     const classes = useStyles()
     const [decodedData, setDecodedData] = useState<Decoded | undefined>(undefined)
-    const [selectedSignature, setSelectedSignature] = useState<string | undefined>(undefined)
+    const [selectedSignature, setSelectedSignature] = useState<string>("")
     const loadDecodedData = useCallback(async (selectedSignature: string) => {
         try {
             setDecodedData(await decodeData(selectedSignature, param.value))
@@ -73,13 +73,13 @@ export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }
     }, [param.value, setDecodedData])
     const selectSignature = useCallback(async (event: React.ChangeEvent<{ value: unknown }>) => {
         const selectedSignature = event.target.value as string
-        setSelectedSignature(selectedSignature)
+        setSelectedSignature(selectedSignature || "")
         await loadDecodedData(selectedSignature)
     }, [setSelectedSignature, loadDecodedData])
     useEffect(() => {
         // Intial load
         const selectedSignature = param.signatures && param.signatures[0]
-        setSelectedSignature(selectedSignature)
+        setSelectedSignature(selectedSignature || "")
         setDecodedData(param.decoded)
         if (!param.decoded && selectedSignature) loadDecodedData(selectedSignature)
     }, [param, setSelectedSignature, loadDecodedData])
@@ -94,7 +94,7 @@ export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }
         )}
         {param.signatures && param.signatures.length > 1 && (
             <FormControl className={classes.formControl}>
-                <InputLabel>Signature</InputLabel>
+                <InputLabel>Signature/ Encoding</InputLabel>
                 <Select value={selectedSignature} onChange={selectSignature}>
                     {param.signatures.map((sig) => (<MenuItem value={sig}>{sig}</MenuItem>))}
                 </Select>

@@ -2,7 +2,10 @@ import axios from 'axios';
 import { FunctionFragment, Interface, Result } from '@ethersproject/abi';
 import { BigNumber } from "@ethersproject/bignumber";
 
-export const DEFERRED_DECODING = 'deferred'
+const MULTISEND_SIGNATURES = [
+    "Multisend",
+    "Deprecated Multisend"
+]
 
 export interface DecodedValue {
     label?: string,
@@ -29,6 +32,9 @@ export const loadSignatures = async (data: string): Promise<string[] | undefined
 }
 
 export const decodeData = async (functionSignature: string, data: string): Promise<Decoded | undefined> => {
+    if (MULTISEND_SIGNATURES.indexOf(functionSignature) >= 0) {
+        return await handleSpecialSignatures(functionSignature, data)
+    }
     const functionFragment = FunctionFragment.fromString(functionSignature)
     const decoded = defaultInterface.decodeFunctionData(functionFragment, data)
     const params = await processDecoded(functionFragment, decoded)
@@ -41,7 +47,7 @@ export const decodeData = async (functionSignature: string, data: string): Promi
 const processDecoded = async (functionFragment: FunctionFragment, decoded: Result): Promise<DecodedValue[]> => {
     const sigHash = Interface.getSighash(functionFragment).toLocaleLowerCase()
     if (sigHash === "0x8d80ff0a" && decoded.length == 1) {
-        try { return [await decodeMultisend(decoded[0])] } catch (e) { console.error(e) }
+        return [stubMultisend(decoded[0])]
     }
     if (sigHash === "0x6a761202" && decoded.length == 10) {
         try { return [await decodeSafeTransaction(decoded)] } catch (e) { console.error(e) }
@@ -49,7 +55,25 @@ const processDecoded = async (functionFragment: FunctionFragment, decoded: Resul
     return decoded.map((param) => { return { value: param } })
 }
 
-const decodeMultisend = async (multisendData: string): Promise<DecodedValue> => {
+const stubMultisend = (multisendData: string): DecodedValue => {
+    return {
+        value: multisendData,
+        signatures: MULTISEND_SIGNATURES
+    }
+}
+
+const handleSpecialSignatures = async (functionSignature: string, data: string): Promise<Decoded | undefined> => {
+    switch (functionSignature) {
+        case "Multisend":
+            return await decodeMultisend(data)
+        case "Deprecated Multisend":
+            return await decodeDeprecatedMultisend(data)
+        default:
+            throw Error("Unknown function signature: " + functionSignature)
+    }
+}
+
+const decodeMultisend = async (multisendData: string): Promise<Decoded> => {
     let index = 2;
     const params: DecodedValue[] = []
     while (index < multisendData.length) {
@@ -73,11 +97,39 @@ const decodeMultisend = async (multisendData: string): Promise<DecodedValue> => 
         })
     }
     return {
-        value: multisendData,
-        decoded: {
-            label: "Multisend transactions",
-            params
-        }
+        label: "Multisend transactions",
+        params
+    }
+}
+
+const decodeDeprecatedMultisend = async (multisendData: string): Promise<Decoded> => {
+    let index = 2;
+    const params: DecodedValue[] = []
+    while (index < multisendData.length) {
+        const operation = parseInt(multisendData.slice(index, index += 64), 16)
+        const to = "0x" + multisendData.slice(index + 24, index += 64)
+        const value = BigNumber.from("0x" + multisendData.slice(index, index += 64)).toHexString()
+        const dataLength = parseInt(multisendData.slice(index+=64, index += 64), 16) * 2
+        const data = "0x" + multisendData.slice(index, index += dataLength)
+        const signatures = await loadSignatures(data)
+        // Add padding
+        index += (64 - dataLength % 64)
+        params.push({
+            value: undefined,
+            decoded: {
+                label: "Transaction " + (params.length + 1),
+                params: [
+                    { label: "Operation", value: operation },
+                    { label: "To", value: to },
+                    { label: "Value", value: value },
+                    { label: "Data", value: data, signatures }
+                ]
+            }
+        })
+    }
+    return {
+        label: "Deprecated Multisend transactions",
+        params
     }
 }
 
