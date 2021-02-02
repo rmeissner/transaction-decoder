@@ -11,7 +11,8 @@ export interface DecodedValue {
     label?: string,
     value: any,
     signatures?: ReadonlyArray<string>,
-    decoded?: Decoded
+    decoded?: Decoded,
+    canCollapse?: boolean
 }
 
 export interface Decoded {
@@ -58,6 +59,7 @@ const processDecoded = async (functionFragment: FunctionFragment, decoded: Resul
 const stubMultisend = (multisendData: string): DecodedValue => {
     return {
         value: multisendData,
+        canCollapse: true,
         signatures: MULTISEND_SIGNATURES
     }
 }
@@ -91,7 +93,7 @@ const decodeMultisend = async (multisendData: string): Promise<Decoded> => {
                     { label: "Operation", value: operation },
                     { label: "To", value: to },
                     { label: "Value", value: value },
-                    { label: "Data", value: data, signatures }
+                    { label: "Data", value: data, signatures, canCollapse: true }
                 ]
             }
         })
@@ -122,7 +124,7 @@ const decodeDeprecatedMultisend = async (multisendData: string): Promise<Decoded
                     { label: "Operation", value: operation },
                     { label: "To", value: to },
                     { label: "Value", value: value },
-                    { label: "Data", value: data, signatures }
+                    { label: "Data", value: data, signatures, canCollapse: true }
                 ]
             }
         })
@@ -141,7 +143,7 @@ const decodeSafeTransaction = async (decoded: Result): Promise<DecodedValue> => 
             params: [
                 { label: "To", value: decoded[0] },
                 { label: "Value", value: decoded[1] },
-                { label: "Data", value: decoded[2], signatures: await loadSignatures(decoded[2]) },
+                { label: "Data", value: decoded[2], signatures: await loadSignatures(decoded[2]), canCollapse: true },
                 { label: "Operation", value: decoded[3] },
                 { label: "SafeTxGas", value: decoded[4] },
                 { label: "BaseGas", value: decoded[5] },

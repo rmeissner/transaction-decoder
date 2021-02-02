@@ -8,6 +8,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import Link from '@material-ui/core/Link';
 
 const Accordion = withStyles({
     root: {
@@ -61,6 +62,7 @@ interface Props {
 
 export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }> = ({ param, hideValue }) => {
     const classes = useStyles()
+    const [collapseValue, setCollapsedValue] = useState(false)
     const [decodedData, setDecodedData] = useState<Decoded | undefined>(undefined)
     const [selectedSignature, setSelectedSignature] = useState<string>("")
     const loadDecodedData = useCallback(async (selectedSignature: string) => {
@@ -81,15 +83,22 @@ export const DecodedParam: React.FC<{ param: DecodedValue, hideValue?: boolean }
         const selectedSignature = param.signatures && param.signatures[0]
         setSelectedSignature(selectedSignature || "")
         setDecodedData(param.decoded)
+        setCollapsedValue(!!param.canCollapse && param.value.toString().length > 100)
         if (!param.decoded && selectedSignature) loadDecodedData(selectedSignature)
     }, [param, setSelectedSignature, loadDecodedData])
     return (<>
-        {param.label !== undefined && (
-            <b>{param.label}</b>
-        )}
+        <span>
+            {param.label !== undefined && (
+                <b>{param.label}</b>
+            )}
+            &nbsp;
+            {param.canCollapse !== undefined && (
+                <Link onClick={() => setCollapsedValue(!collapseValue)} color="inherit">{ collapseValue ? "Expand" : "Collapse"}</Link>
+            )}
+        </span>
         {param.value !== undefined && !hideValue && (
             <span className={classes.values}>
-                {param.value.toString()}
+                {collapseValue ? param.value.toString().slice(0, 90) + "..." : param.value.toString()}
             </span>
         )}
         {param.signatures && param.signatures.length > 1 && (
