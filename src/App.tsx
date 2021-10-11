@@ -8,6 +8,7 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { DecodedParam } from './DecodedData';
 import { DecodedValue, loadSignatures } from './utils/decoding';
+import { useLocation } from 'react-router';
 
 const useStyles = makeStyles((theme) => ({
   content: {
@@ -18,9 +19,16 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
+// A custom hook that builds on useLocation to parse
+// the query string for you.
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 function App() {
+  const query = useQuery()
   const classes = useStyles();
-  const [txData, setTxData] = useState("")
+  const [txData, setTxData] = useState(query.get("data") || "")
   const [dataInfo, setDataInfo] = useState<DecodedValue | undefined>(undefined)
   const loadDataInfo = useCallback(async (data: string) => {
     setTxData(data)
